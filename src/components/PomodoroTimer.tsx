@@ -3,6 +3,7 @@ import { TimerDisplay } from "./TimerDisplay";
 import { TimerControls } from "./TimerControls";
 import { SettingsPanel } from "./SettingsPanel";
 import { TaskList } from "./TaskList";
+import { TimelineEditor, TimelineItem } from "./TimelineEditor";
 import { Button } from "@/components/ui/button";
 import { Settings as SettingsIcon } from "lucide-react";
 import {
@@ -13,7 +14,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-export type TimerMode = "work" | "shortBreak" | "longBreak";
+export type TimerMode = "work" | "shortBreak" | "longBreak" | "break";
 
 export interface Task {
   id: string;
@@ -27,6 +28,12 @@ const PomodoroTimer = () => {
   const [shortBreakTime, setShortBreakTime] = useState(5);
   const [longBreakTime, setLongBreakTime] = useState(15);
 
+  const [timeline, setTimeline] = useState<TimelineItem[]>([
+    { type: "work", duration: 25 },
+    { type: "break", duration: 5 },
+  ]);
+  const [currentTimelineIndex, setCurrentTimelineIndex] = useState(0);
+
   const [mode, setMode] = useState<TimerMode>("work");
   const [timeLeft, setTimeLeft] = useState(workTime * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -36,10 +43,16 @@ const PomodoroTimer = () => {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (mode === "work") setTimeLeft(workTime * 60);
-    else if (mode === "shortBreak") setTimeLeft(shortBreakTime * 60);
-    else setTimeLeft(longBreakTime * 60);
-  }, [mode, workTime, shortBreakTime, longBreakTime]);
+    const currentItem = timeline[currentTimelineIndex];
+    if (currentItem) {
+      setMode(currentItem.type === "work" ? "work" : "break");
+      setTimeLeft(currentItem.duration * 60);
+    } else {
+      // Reset to default if timeline is empty
+      setMode("work");
+      setTimeLeft(workTime * 60);
+    }
+  }, [currentTimelineIndex, timeline, workTime]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -70,13 +83,10 @@ const PomodoroTimer = () => {
           )
         );
       }
-
-      const nextMode =
-        (pomodorosCompleted + 1) % 4 === 0 ? "longBreak" : "shortBreak";
-      setMode(nextMode);
-    } else {
-      setMode("work");
     }
+
+    // Move to the next item in the timeline
+    setCurrentTimelineIndex((prevIndex) => (prevIndex + 1) % timeline.length);
   };
 
   const toggleTimer = () => {
@@ -85,13 +95,21 @@ const PomodoroTimer = () => {
 
   const resetTimer = () => {
     setIsRunning(false);
-    if (mode === "work") setTimeLeft(workTime * 60);
-    else if (mode === "shortBreak") setTimeLeft(shortBreakTime * 60);
-    else setTimeLeft(longBreakTime * 60);
+    const currentItem = timeline[currentTimelineIndex];
+    if (currentItem) {
+      setTimeLeft(currentItem.duration * 60);
+    }
   };
 
   const changeMode = (newMode: TimerMode) => {
-    setMode(newMode);
+    // This function might need to be re-evaluated in the context of a custom timeline
+    // For now, it will just reset the timer to the beginning of the timeline
+    setCurrentTimelineIndex(0);
+    const firstItem = timeline[0];
+    if (firstItem) {
+      setMode(firstItem.type === "work" ? "work" : "break");
+      setTimeLeft(firstItem.duration * 60);
+    }
     setIsRunning(false);
   };
 
@@ -169,6 +187,7 @@ const PomodoroTimer = () => {
                 </span>
               </div>
             </div>
+            <TimelineEditor timeline={timeline} onTimelineChange={setTimeline} />
           </div>
 
           <div className="md:col-span-2 neuro-outset rounded-[2rem] p-8 bg-background">
@@ -188,4 +207,3 @@ const PomodoroTimer = () => {
 };
 
 export default PomodoroTimer;
-
