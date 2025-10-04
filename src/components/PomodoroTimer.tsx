@@ -13,6 +13,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 export type TimerMode = "work" | "shortBreak" | "longBreak" | "break";
 
@@ -86,7 +92,9 @@ const PomodoroTimer = () => {
     }
 
     // Move to the next item in the timeline
-    setCurrentTimelineIndex((prevIndex) => (prevIndex + 1) % timeline.length);
+    if (timeline.length > 0) {
+      setCurrentTimelineIndex((prevIndex) => (prevIndex + 1) % timeline.length);
+    }
   };
 
   const toggleTimer = () => {
@@ -102,8 +110,6 @@ const PomodoroTimer = () => {
   };
 
   const changeMode = (newMode: TimerMode) => {
-    // This function might need to be re-evaluated in the context of a custom timeline
-    // For now, it will just reset the timer to the beginning of the timeline
     setCurrentTimelineIndex(0);
     const firstItem = timeline[0];
     if (firstItem) {
@@ -138,7 +144,7 @@ const PomodoroTimer = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold">Pomodoro Focus</h1>
           <Sheet>
@@ -167,39 +173,53 @@ const PomodoroTimer = () => {
           </Sheet>
         </header>
 
-        <main className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          <div className="md:col-span-3 neuro-outset rounded-[2rem] p-8 bg-background">
-            <TimerDisplay
-              timeLeft={timeLeft}
-              mode={mode}
-              onModeChange={changeMode}
-            />
-            <TimerControls
-              isRunning={isRunning}
-              onToggle={toggleTimer}
-              onReset={resetTimer}
-            />
-            <div className="mt-8 neuro-inset rounded-2xl p-4 bg-background">
-              <div className="text-center text-muted-foreground text-sm">
-                Pomodoros completados:{" "}
-                <span className="font-bold text-primary text-lg">
-                  {pomodorosCompleted}
-                </span>
+        <main>
+          <Tabs defaultValue="timer" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 neuro-flat">
+              <TabsTrigger value="timer">Timer</TabsTrigger>
+              <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            </TabsList>
+            <TabsContent value="timer">
+              <div className="neuro-outset rounded-[2rem] p-8 mt-8 bg-background">
+                <TimerDisplay
+                  timeLeft={timeLeft}
+                  mode={mode}
+                  onModeChange={changeMode}
+                />
+                <TimerControls
+                  isRunning={isRunning}
+                  onToggle={toggleTimer}
+                  onReset={resetTimer}
+                />
+                <div className="mt-8 neuro-inset rounded-2xl p-4 bg-background">
+                  <div className="text-center text-muted-foreground text-sm">
+                    Pomodoros completados:{" "}
+                    <span className="font-bold text-primary text-lg">
+                      {pomodorosCompleted}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <TimelineEditor timeline={timeline} onTimelineChange={setTimeline} />
-          </div>
-
-          <div className="md:col-span-2 neuro-outset rounded-[2rem] p-8 bg-background">
-            <TaskList
-              tasks={tasks}
-              currentTaskId={currentTaskId}
-              onAddTask={addTask}
-              onToggleComplete={toggleTaskComplete}
-              onDeleteTask={deleteTask}
-              onSelectTask={setCurrentTaskId}
-            />
-          </div>
+            </TabsContent>
+            <TabsContent value="timeline">
+              <div className="neuro-outset rounded-[2rem] p-8 mt-8 bg-background">
+                <TimelineEditor timeline={timeline} onTimelineChange={setTimeline} />
+              </div>
+            </TabsContent>
+            <TabsContent value="tasks">
+              <div className="neuro-outset rounded-[2rem] p-8 mt-8 bg-background">
+                <TaskList
+                  tasks={tasks}
+                  currentTaskId={currentTaskId}
+                  onAddTask={addTask}
+                  onToggleComplete={toggleTaskComplete}
+                  onDeleteTask={deleteTask}
+                  onSelectTask={setCurrentTaskId}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </div>
